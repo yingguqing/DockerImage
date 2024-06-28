@@ -4,17 +4,30 @@ name: Docker
 on:
   workflow_dispatch:
     inputs:
+      ali_tencent:
+        type: choice
+        description: "选择使用阿里云或腾讯云"
+        options: 
+          - ali
+          - tencent
+        default: ali
       docker_images:
         description: '请填写docker镜像名称 多个用英文逗号分开'
         required: true
         default: 'alpine:latest,ubuntu:latest'  # 设置默认的 Docker 镜像列表
 
 
-env:
+env: 
+  # 阿里云配置
   ALIYUN_REGISTRY: "${{ secrets.ALIYUN_REGISTRY }}"
   ALIYUN_NAME_SPACE: "${{ secrets.ALIYUN_NAME_SPACE }}"
   ALIYUN_REGISTRY_USER: "${{ secrets.ALIYUN_REGISTRY_USER }}"
   ALIYUN_REGISTRY_PASSWORD: "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}"
+  # 腾讯云配置
+  TENCENT_REGISTRY: "${{ secrets.TENCENT_REGISTRY }}"
+  TENCENT_NAME_SPACE: "${{ secrets.TENCENT_NAME_SPACE }}"
+  TENCENT_REGISTRY_USER: "${{ secrets.TENCENT_REGISTRY_USER }}" # 用户名是一串数字，在个人实例中查看。
+  TENCENT_REGISTRY_PASSWORD: "${{ secrets.TENCENT_REGISTRY_PASSWORD }}"
 
 jobs:
 
@@ -60,8 +73,20 @@ jobs:
 
     - name: Pull Docker Images and Package
       run: |
+        ali_tencent="${{ github.event.inputs.ali_tencent }}"
+        if [ "$ali_tencent" == "ali" ];then
+          REGISTRY=$ALIYUN_REGISTRY
+          NAME_SPACE=$ALIYUN_NAME_SPACE
+          REGISTRY_USER=$ALIYUN_REGISTRY_USER
+          REGISTRY_PASSWORD=$ALIYUN_REGISTRY_PASSWORD
+        else
+          REGISTRY=$TENCENT_REGISTRY
+          NAME_SPACE=$TENCENT_NAME_SPACE
+          REGISTRY_USER=$TENCENT_REGISTRY_USER
+          REGISTRY_PASSWORD=$TENCENT_REGISTRY_PASSWORD
+        fi
         export DOCKER_CLI_EXPERIMENTAL=enabled
-        docker login -u $ALIYUN_REGISTRY_USER -p $ALIYUN_REGISTRY_PASSWORD $ALIYUN_REGISTRY
+        docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $REGISTRY
         images="${{ github.event.inputs.docker_images }}"
         IFS=',' read -r -a image_array <<< "$images"
         for image in "${image_array[@]}"; do
@@ -71,30 +96,30 @@ jobs:
           image_with_tag_or_sha=${image##*/}
           # 提取去掉标签或sha256的镜像名
           image_name=${image_with_tag_or_sha%%@*}
-          aliyun_repo="$ALIYUN_REGISTRY/$ALIYUN_NAME_SPACE/$image_name"
+          user_repo="$REGISTRY/$NAME_SPACE/$image_name"
           # 拉取 x86_64 架构的镜像
           docker pull --platform linux/amd64 $image
           # 拉取 arm64 架构的镜像
           docker pull --platform linux/arm64 $image
           # 标记 x86_64 镜像
-          docker tag $image ${aliyun_repo}-amd64
+          docker tag $image ${user_repo}-amd64
           # 标记 arm64 镜像
-          docker tag $image ${aliyun_repo}-arm64
+          docker tag $image ${user_repo}-arm64
           # 推送 x86_64 镜像
-          docker push ${aliyun_repo}-amd64
+          docker push ${user_repo}-amd64
           # 推送 arm64 镜像
-          docker push ${aliyun_repo}-arm64
+          docker push ${user_repo}-arm64
           # 创建镜像清单
-          docker manifest create ${aliyun_repo} \
-            --amend ${aliyun_repo}-amd64 \
-            --amend ${aliyun_repo}-arm64
+          docker manifest create ${user_repo} \
+            --amend ${user_repo}-amd64 \
+            --amend ${user_repo}-arm64
           # 为每个架构添加注释
-          docker manifest annotate ${aliyun_repo} \
-            ${aliyun_repo}-amd64 --arch amd64
-          docker manifest annotate ${aliyun_repo} \
-            ${aliyun_repo}-arm64 --arch arm64
+          docker manifest annotate ${user_repo} \
+            ${user_repo}-amd64 --arch amd64
+          docker manifest annotate ${user_repo} \
+            ${user_repo}-arm64 --arch arm64
           # 推送多架构镜像清单
-          docker manifest push ${aliyun_repo}
+          docker manifest push ${user_repo}
           echo "开始清理磁盘空间"
           echo "=============================================================================="
           df -hT

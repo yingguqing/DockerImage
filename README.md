@@ -17,6 +17,14 @@
 密码（**ALIYUN_REGISTRY_PASSWORD**)<br>
 仓库地址（**ALIYUN_REGISTRY**）<br>
 
+## 腾讯云参数
+
+创建一个命名空间（**TENCENT_NAME_SPACE**）<br>
+访问用个人实例–>登录实例<br>
+用户名（**TENCENT_REGISTRY_USER**) 一串数字<br>
+密码（**TENCENT_REGISTRY_PASSWORD**)<br>
+仓库地址（**TENCENT_REGISTRY**）<br>
+
 ## 打包镜像
 
 Action目录下，使用以下脚本。
