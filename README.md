@@ -23,3 +23,9 @@ Action目录下，使用以下脚本。
 
 - `amd64.yml`
 - `arm64.yml`
+
+## 感谢
+
+打包脚本是从[DockerTarBuilder](https://github.com/wukongdaily/DockerTarBuilder)复制过来的。
+
+部分灵感借鉴[docker_image_pusher](https://github.com/tech-shrimp/docker_image_pusher)
