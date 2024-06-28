@@ -1,0 +1,107 @@
+# 拉取amd64(x86_64)和arm64镜像，使用manifest合并后推到阿里云个人私有镜像仓库
+name: Docker
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker_images:
+        description: '请填写docker镜像名称 多个用英文逗号分开'
+        required: true
+        default: 'alpine:latest,ubuntu:latest'  # 设置默认的 Docker 镜像列表
+
+
+env:
+  ALIYUN_REGISTRY: "${{ secrets.ALIYUN_REGISTRY }}"
+  ALIYUN_NAME_SPACE: "${{ secrets.ALIYUN_NAME_SPACE }}"
+  ALIYUN_REGISTRY_USER: "${{ secrets.ALIYUN_REGISTRY_USER }}"
+  ALIYUN_REGISTRY_PASSWORD: "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}"
+
+jobs:
+
+  build:
+    name: Pull
+    runs-on: ubuntu-latest
+    steps:
+    - name: Before freeing up disk space
+      run: |
+        echo "Before freeing up disk space"
+        echo "=============================================================================="
+        df -hT
+        echo "=============================================================================="
+
+    # 增加可用磁盘空间
+    - name: Maximize build space
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 2048
+        swap-size-mb: 128
+        remove-dotnet: 'true'
+        remove-haskell: 'true'
+        # 如果空间还是不够用，可以把以下开启，清理出更多空间
+        #remove-android: 'true'
+        #remove-codeql: 'true'
+        build-mount-path: '/var/lib/docker/'
+
+    - name: Restart docker
+      run: sudo service docker restart
+
+    - name: Free up disk space complete
+      run: |
+        echo "Free up disk space complete"
+        echo "=============================================================================="
+        df -hT
+        echo "=============================================================================="
+
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Docker Setup Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Pull Docker Images and Package
+      run: |
+        export DOCKER_CLI_EXPERIMENTAL=enabled
+        docker login -u $ALIYUN_REGISTRY_USER -p $ALIYUN_REGISTRY_PASSWORD $ALIYUN_REGISTRY
+        images="${{ github.event.inputs.docker_images }}"
+        IFS=',' read -r -a image_array <<< "$images"
+        for image in "${image_array[@]}"; do
+          # 忽略空行
+          [[ -z "$image" ]] && continue
+          # 提取包含可能的标签或sha256的部分
+          image_with_tag_or_sha=${image##*/}
+          # 提取去掉标签或sha256的镜像名
+          image_name=${image_with_tag_or_sha%%@*}
+          aliyun_repo="$ALIYUN_REGISTRY/$ALIYUN_NAME_SPACE/$image_name"
+          # 拉取 x86_64 架构的镜像
+          docker pull --platform linux/amd64 $image
+          # 拉取 arm64 架构的镜像
+          docker pull --platform linux/arm64 $image
+          # 标记 x86_64 镜像
+          docker tag $image ${aliyun_repo}-amd64
+          # 标记 arm64 镜像
+          docker tag $image ${aliyun_repo}-arm64
+          # 推送 x86_64 镜像
+          docker push ${aliyun_repo}-amd64
+          # 推送 arm64 镜像
+          docker push ${aliyun_repo}-arm64
+          # 创建镜像清单
+          docker manifest create ${aliyun_repo} \
+            --amend ${aliyun_repo}-amd64 \
+            --amend ${aliyun_repo}-arm64
+          # 为每个架构添加注释
+          docker manifest annotate ${aliyun_repo} \
+            ${aliyun_repo}-amd64 --arch amd64
+          docker manifest annotate ${aliyun_repo} \
+            ${aliyun_repo}-arm64 --arch arm64
+          # 推送多架构镜像清单
+          docker manifest push ${aliyun_repo}
+          echo "开始清理磁盘空间"
+          echo "=============================================================================="
+          df -hT
+          echo "=============================================================================="
+          docker rmi $image
+          echo "磁盘空间清理完毕"
+          echo "=============================================================================="
+          df -hT
+          echo "=============================================================================="  
+        done
