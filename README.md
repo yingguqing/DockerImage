@@ -16,3 +16,10 @@
 用户名（**ALIYUN_REGISTRY_USER**)<br>
 密码（**ALIYUN_REGISTRY_PASSWORD**)<br>
 仓库地址（**ALIYUN_REGISTRY**）<br>
+
+## 打包镜像
+
+Action目录下，使用以下脚本。
+
+- `amd64.yml`
+- `arm64.yml`
