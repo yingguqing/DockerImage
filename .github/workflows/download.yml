@@ -1,5 +1,5 @@
 # 如果没有阿里云或腾讯云，可以将镜像打包，在github上下载
-name: download
+name: Download
 
 on:
   workflow_dispatch:
