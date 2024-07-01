@@ -1,12 +1,20 @@
-name: ARM64
+# 如果没有阿里云或腾讯云，可以将镜像打包，在github上下载
+name: download
 
 on:
   workflow_dispatch:
     inputs:
+      platform:
+        type: choice
+        description: "选择镜像架构"
+        options: 
+          - amd64
+          - arm64
+        default: arm64
       docker_images:
         description: '请填写docker镜像名称 多个用英文逗号分开'
         required: true
-        default: 'alpine:latest,ubuntu:latest'  # 设置默认的 Docker 镜像列表
+        default: 'ubuntu:latest'  # 设置默认的 Docker 镜像列表
 
 jobs:
   pull_and_package:
@@ -18,23 +26,24 @@ jobs:
 
     - name: Pull Docker Images and Package
       run: |
+        pf="${{ github.event.inputs.platform }}"
         images="${{ github.event.inputs.docker_images }}"
         IFS=',' read -r -a image_array <<< "$images"
         for image in "${image_array[@]}"; do
-          docker pull "${image}" --platform "linux/arm64"
-          docker save "${image}" -o "${image//\//_}-arm64.tar"
+          docker pull "${image}" --platform "linux/${pf}"
+          docker save "${image}" -o "${image//\//_}-${pf}.tar"
         done
 
     - name: Compress the TAR files
-      run: tar -czf arm64-images.tar.gz *-arm64.tar
+      run: tar -czf ${pf}-images.tar.gz *-${pf}.tar
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: docker-images-tar
-        path: arm64-images.tar.gz
+        path: ${pf}-images.tar.gz
         retention-days: 1  # 将保留天数设置为 1 天 最多可设置90天
 
     - name: Clean up intermediate files
       run: |
-        rm *-arm64.tar
+        rm *-${pf}.tar
