@@ -1,0 +1,46 @@
+# 打包镜像，上传到指定URL(脚本使用：miniserve上传服务)
+name: Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        type: choice
+        description: "选择镜像架构"
+        options: 
+          - amd64
+          - arm64
+        default: arm64
+      docker_images:
+        description: '请填写docker镜像名称 多个用英文逗号分开'
+        required: true
+        default: 'ubuntu:latest'  # 设置默认的 Docker 镜像列表
+
+env: 
+  # 上传token
+  Authorization: "${{ secrets.Authorization }}"
+
+jobs:
+  pull_and_package:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Pull Docker Images and Package
+      run: |
+        pf="${{ github.event.inputs.platform }}"
+        images="${{ github.event.inputs.docker_images }}"
+        IFS=',' read -r -a image_array <<< "$images"
+        for image in "${image_array[@]}"; do
+          docker pull "${image}" --platform "linux/${pf}"
+          file="${image//\//_}-image.tar"
+          docker save "${image}" -o $file
+          # 上传
+          curl -H "Authorization: ${Authorization}" -F "path=@$file" https://upload.yingguqing.online/upload\?path\=/
+        done
+
+    - name: Clean up intermediate files
+      run: |
+        rm *-image.tar
