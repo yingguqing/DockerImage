@@ -39,7 +39,8 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup WARP
-      uses: fscarmen/warp-on-actions@v2
+      uses: fscarmen/warp-on-actions@v1.1
+      
     - name: ipv6
       run: |
         curl -m 9 --ipv6 --verbose https://google.com
