@@ -38,22 +38,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install miredo
-      run: |
-        sudo apt install -y miredo
-        sudo sed -i 's/ServerAddress  teredo-debian.remlab.net/ServerAddress teredo.iks-jena.de/g' /etc/miredo.conf
-        sudo miredo
-        cat /etc/miredo.conf
-        sleep 1
-        ip addr
-        sleep 1
-        ip addr
-        sleep 1
-        ip addr
-    - name: Test IPv6
-      run: |
-        curl https://ipv6.icanhazip.com
-
     - name: Pull Docker Images and Package
       run: |
         pf="${{ github.event.inputs.platform }}"
@@ -83,6 +67,7 @@ jobs:
               exit 1
           fi
           # 上传
+          curl --ipv6 --verbose https://google.com/
           curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@$absolute_path"
         done
 
