@@ -51,7 +51,11 @@ jobs:
         IFS=',' read -r -a image_array <<< "$images"
         for image in "${image_array[@]}"; do
           docker pull "${image}" --platform "linux/${pf}"
-          file_path="${image//\//_}-image.tar"
+          # 提取包含可能的标签或sha256的部分
+          image_with_tag_or_sha=${image##*/}
+          # 提取去掉标签或sha256的镜像名
+          image_name=${image_with_tag_or_sha%%@*}
+          file_path="${image_name}-image.tar"
           docker save "${image}" -o $file_path
           # 获取完整路径
           if command -v realpath > /dev/null; then
