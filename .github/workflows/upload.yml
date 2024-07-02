@@ -63,7 +63,8 @@ jobs:
               exit 1
           fi
           # 上传
-          curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@$absolute_path"
+          echo "path=@$absolute_path"
+          curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@$absolute_path" -v
         done
 
     - name: Clean up intermediate files
