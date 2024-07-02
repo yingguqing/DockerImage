@@ -33,11 +33,41 @@ env:
 jobs:
   pull_and_package:
     runs-on: ubuntu-latest
-
     steps:
+    - name: Before freeing up disk space
+      run: |
+        echo "Before freeing up disk space"
+        echo "=============================================================================="
+        df -hT
+        echo "=============================================================================="
+
+    # 增加可用磁盘空间
+    - name: Maximize build space
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 2048
+        swap-size-mb: 128
+        remove-dotnet: 'true'
+        remove-haskell: 'true'
+        # 如果空间还是不够用，可以把以下开启，清理出更多空间
+        remove-android: 'true'
+        remove-codeql: 'true'
+        build-mount-path: '/var/lib/docker/'
+
+    - name: Restart docker
+      run: sudo service docker restart
+
+    - name: Free up disk space complete
+      run: |
+        echo "Free up disk space complete"
+        echo "=============================================================================="
+        df -hT
+        echo "=============================================================================="
+
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # 开启ipv4和ipv6，解决只有ipv6的情况下，上传失败
     - name: Setup WARP
       uses: fscarmen/warp-on-actions@v1.1
 
@@ -69,10 +99,20 @@ jobs:
               echo "获取完整路径失败."
               exit 1
           fi
-          # 上传
-          curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@$absolute_path"
-        done
 
-    - name: Clean up intermediate files
-      run: |
-        rm *-image.tar
+          echo "开始上传镜像"
+          curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@$absolute_path"
+          
+          echo "开始清理磁盘空间"
+          echo "=============================================================================="
+          df -hT
+          echo "=============================================================================="
+          # 删除镜像压缩包
+          rm $file_path
+          # 清理镜像
+          docker rmi $image
+          echo "磁盘空间清理完毕"
+          echo "=============================================================================="
+          df -hT
+          echo "==============================================================================" 
+        done
