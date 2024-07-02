@@ -21,7 +21,7 @@ on:
       docker_images:
         description: '请填写docker镜像名称 多个用英文逗号分开'
         required: true
-        default: 'ubuntu:latest'  # 设置默认的 Docker 镜像列表
+        default: 'snowdreamtech/frps:latest'  # 设置默认的 Docker 镜像列表
 
 env: 
   # 上传token
@@ -37,6 +37,13 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Setup WARP
+      uses: fscarmen/warp-on-actions@v2
+    - name: ipv6
+      run: |
+        curl -m 9 --ipv6 --verbose https://google.com
+        curl -m 9 -6 https://ifconfig.co
 
     - name: Pull Docker Images and Package
       run: |
@@ -67,8 +74,7 @@ jobs:
               exit 1
           fi
           # 上传
-          curl --ipv6 --verbose https://google.com/
-          curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@$absolute_path"
+          curl --progress-bar -X POST -H "Authorization: ${Authorization}" "--ipv6 $UPLOADURL" -F "path=@$absolute_path"
         done
 
     - name: Clean up intermediate files
