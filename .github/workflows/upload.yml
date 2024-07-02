@@ -11,6 +11,13 @@ on:
           - amd64
           - arm64
         default: arm64
+      # 我有多个需要上传的URL，所以配置成选项。
+      url_tag:
+        type: choice
+        description: "选择上传URL"
+        options: 
+          - 香橙派
+          - 腾讯云
       docker_images:
         description: '请填写docker镜像名称 多个用英文逗号分开'
         required: true
@@ -20,7 +27,8 @@ env:
   # 上传token
   Authorization: "${{ secrets.Authorization }}"
   # 上传链接，有其他参数自行添加
-  UPLOADURL: "${{ secrets.UPLOADURL }}"
+  UPLOADURL1: "${{ secrets.UPLOADURL1 }}"
+  UPLOADURL2: "${{ secrets.UPLOADURL2 }}"
 
 jobs:
   pull_and_package:
@@ -33,6 +41,12 @@ jobs:
     - name: Pull Docker Images and Package
       run: |
         pf="${{ github.event.inputs.platform }}"
+        url_tag="${{ github.event.inputs.url_tag }}"
+        if [ "$url_tag" == "香橙派" ];then
+          UPLOADURL=$UPLOADURL1
+        else
+          UPLOADURL=$UPLOADURL2
+        fi
         images="${{ github.event.inputs.docker_images }}"
         IFS=',' read -r -a image_array <<< "$images"
         for image in "${image_array[@]}"; do
