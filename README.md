@@ -49,6 +49,10 @@ Action目录下`Upload`工作流，目前不支持同时上传到多个服务器
 
 `UPLOADURL`：`https://服务器上传服务URL/upload?path={保存路径，主目录用/}`
 
+`ipv6`：`http://[2409:8a55:116:1111:1111:1111:1111:5]:4534/upload?path=/`
+
+**注意**：如果域名是托管在`cloudflare`上，上传URL直接填写`IP`和`端口`。因为`cloudflare`对上传文件大小有限制，普通用户单个文件最大`100M`。或者对大文件切分后再上传。大文件镜像最好还是使用`阿里云`或`腾讯云`的镜像仓库。
+
 ## 感谢
 
 打包脚本是从[DockerTarBuilder](https://github.com/wukongdaily/DockerTarBuilder)复制过来的。
