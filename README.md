@@ -9,15 +9,22 @@
 - 支持最大40GB的大型镜像<br>
 - 使用阿里云的官方线路，速度快<br>
 - 拉取amd64(x86_64)和arm64架构，使用manifest合并。
+- 打包镜像上传到`github`，在action界面下载。
+- 打包镜像，直接上传到个人服务器上。
 
-## 阿里云参数
+## 个人Docker仓库
+
+Action目录下`Docker`工作流，可以选择相应的云和构架。需要分别配置以下参数。
+
+### 阿里云参数
+
 启用个人实例，创建一个命名空间（**ALIYUN_NAME_SPACE**）<br>
 访问凭证–>获取环境变量<br>
 用户名（**ALIYUN_REGISTRY_USER**)<br>
 密码（**ALIYUN_REGISTRY_PASSWORD**)<br>
 仓库地址（**ALIYUN_REGISTRY**）<br>
 
-## 腾讯云参数
+### 腾讯云参数
 
 创建一个命名空间（**TENCENT_NAME_SPACE**）<br>
 访问用个人实例–>登录实例<br>
@@ -27,10 +34,20 @@
 
 ## 打包镜像
 
-Action目录下，使用以下脚本。
+Action目录下`Download`工作流，可以选择相应的镜像构架，然后自动打包。
 
-- `amd64.yml`
-- `arm64.yml`
+- `amd64`
+- `arm64`
+
+## 上传到服务器
+
+Action目录下`Upload`工作流，目前不支持同时上传到多个服务器。因个有需要，配置了两个服务器上传地址，每次只能上传到一个服务端。
+
+本人服务端使用`svenstaro/miniserve`的上传服务，上传链接：`-H "Authorization: Basic (用户名:密码)base64" "https://服务器上传服务URL/upload?path={保存路径，主目录用/}" -F "path=@{文件完整路径}"`。配置参数：
+
+`Authorization`：`Basic (用户名:密码)base64`
+
+`UPLOADURL`：`https://服务器上传服务URL/upload?path={保存路径，主目录用/}`
 
 ## 感谢
 
