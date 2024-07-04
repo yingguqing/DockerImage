@@ -70,6 +70,8 @@ jobs:
     # 开启ipv4和ipv6，解决只有ipv6的情况下，上传失败
     - name: Setup WARP
       uses: fscarmen/warp-on-actions@v1.1
+      with:
+        stack: dual
 
     - name: Pull Docker Images and Package
       run: |
