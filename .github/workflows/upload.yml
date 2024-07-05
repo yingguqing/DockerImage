@@ -11,13 +11,6 @@ on:
           - amd64
           - arm64
         default: arm64
-      # 我有多个需要上传的URL，所以配置成选项。
-      url_tag:
-        type: choice
-        description: "选择上传URL"
-        options: 
-          - 香橙派
-          - 腾讯云
       docker_images:
         description: '请填写docker镜像名称 多个用英文逗号分开'
         required: true
@@ -26,9 +19,8 @@ on:
 env: 
   # 上传token
   Authorization: "${{ secrets.Authorization }}"
-  # 上传链接，有其他参数自行添加
-  UPLOADURL1: "${{ secrets.UPLOADURL1 }}"
-  UPLOADURL2: "${{ secrets.UPLOADURL2 }}"
+  # 上传链接
+  UPLOADURL: "${{ secrets.UPLOADURL }}"
 
 jobs:
   pull_and_package:
@@ -68,20 +60,14 @@ jobs:
       uses: actions/checkout@v4
 
     # 开启ipv4和ipv6，解决只有ipv6的情况下，上传失败
-    - name: Setup WARP
-      uses: fscarmen/warp-on-actions@v1.1
-      with:
-        stack: dual
+    #- name: Setup WARP
+    #  uses: fscarmen/warp-on-actions@v1.1
+    #  with:
+    #    stack: dual
 
     - name: Pull Docker Images and Package
       run: |
         pf="${{ github.event.inputs.platform }}"
-        url_tag="${{ github.event.inputs.url_tag }}"
-        if [ "$url_tag" == "香橙派" ];then
-          UPLOADURL=$UPLOADURL1
-        else
-          UPLOADURL=$UPLOADURL2
-        fi
         images="${{ github.event.inputs.docker_images }}"
         IFS=',' read -r -a image_array <<< "$images"
         for image in "${image_array[@]}"; do

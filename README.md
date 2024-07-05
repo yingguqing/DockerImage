@@ -41,15 +41,17 @@ Action目录下`Download`工作流，可以选择相应的镜像构架，然后�
 
 ## 上传到服务器
 
-Action目录下`Upload`工作流，目前不支持同时上传到多个服务器。因个有需要，配置了两个服务器上传地址，每次只能上传到一个服务端。
+Action目录下`Upload`工作流，自动拉取镜像，打包后上传到服务器。
 
-本人服务端使用`svenstaro/miniserve`的上传服务，上传链接：`-H "Authorization: Basic (用户名:密码)base64" "https://服务器上传服务URL/upload?path={保存路径，主目录用/}" -F "path=@{文件完整路径}"`。配置参数：
+本人服务端使用`svenstaro/miniserve`的上传服务，上传链接：`-H "Authorization: Basic (用户名:密码)base64" "https://服务器上传服务URL/upload?path={保存路径，主目录用/}" -F "path=@{文件完整路径}"`。
+
+配置参数：
 
 `Authorization`：`Basic (用户名:密码)base64`
 
 `UPLOADURL`：`https://服务器上传服务URL/upload?path={保存路径，主目录用/}`
 
-`ipv6`：`http://[2409:8a55:116:1111:1111:1111:1111:5]:4534/upload?path=/`
+如果地址只有ipv6，需要在脚本中解开注释的ipv6模块，调用`cloudflare`的`ipv4`转`ipv6`服务。限制和域名托管在`cloudflare`上一样。
 
 **注意**：如果域名是托管在`cloudflare`上，上传URL直接填写`IP`和`端口`。因为`cloudflare`对上传文件大小有限制，普通用户单个文件最大`100M`。或者对大文件切分后再上传。大文件镜像最好还是使用`阿里云`或`腾讯云`的镜像仓库。
 
