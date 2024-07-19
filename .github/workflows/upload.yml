@@ -56,6 +56,9 @@ jobs:
         df -hT
         echo "=============================================================================="
 
+    - name: Install pv
+      run: sudo apt-get install -y pv
+
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -96,7 +99,7 @@ jobs:
 
     - name: Upload file
       run: |
-        curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@images.tar.gz" 2>&1 | awk '{printf "\r%s", $0} END {print ""}'
+        pv -p | curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@images.tar.gz"
 
     - name: Clean up intermediate files
       run: |
