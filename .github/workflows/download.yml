@@ -1,5 +1,5 @@
 # 如果没有阿里云或腾讯云，可以将镜像打包，在github上下载
-name: Download
+name: 下载镜像
 
 on:
   workflow_dispatch:
@@ -26,11 +26,11 @@ jobs:
 
     - name: Pull Docker Images and Package
       run: |
-        pf="${{ github.event.inputs.platform }}"
+        platform="${{ github.event.inputs.platform }}"
         images="${{ github.event.inputs.docker_images }}"
         IFS=',' read -r -a image_array <<< "$images"
         for image in "${image_array[@]}"; do
-          docker pull "${image}" --platform "linux/${pf}"
+          docker pull "${image}" --platform "linux/${platform}"
           docker save "${image}" -o "${image//\//_}-image.tar"
         done
 

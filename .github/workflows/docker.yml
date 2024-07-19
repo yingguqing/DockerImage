@@ -1,5 +1,5 @@
 # 拉取amd64(x86_64)和arm64镜像，使用manifest合并后推到阿里云个人私有镜像仓库
-name: Docker
+name: 镜像仓库
 
 on:
   workflow_dispatch:

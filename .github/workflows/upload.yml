@@ -1,5 +1,5 @@
 # 打包镜像，上传到指定URL(脚本使用：miniserve上传服务)
-name: Upload
+name: 上传镜像
 
 on:
   workflow_dispatch:
@@ -65,38 +65,23 @@ jobs:
     #  with:
     #    stack: dual
 
-    - name: Pull Docker Images and Package
+    - name: 拉取、打包镜像
       run: |
-        pf="${{ github.event.inputs.platform }}"
+        platform="${{ github.event.inputs.platform }}"
         images="${{ github.event.inputs.docker_images }}"
         IFS=',' read -r -a image_array <<< "$images"
         for image in "${image_array[@]}"; do
-          docker pull "${image}" --platform "linux/${pf}"
+          docker pull "${image}" --platform "linux/${platform}"
           # 提取包含可能的标签或sha256的部分
           image_with_tag_or_sha=${image##*/}
           # 提取去掉标签或sha256的镜像名
           image_name=${image_with_tag_or_sha%%[:@]*}
-          file_path="${image_name}-image.tar"
-          docker save "${image}" -o $file_path
-          # 获取完整路径
-          if command -v realpath > /dev/null; then
-              absolute_path=$(realpath "$file_path")
-          elif command -v readlink > /dev/null; then
-              absolute_path=$(readlink -f "$file_path")
-          else
-              echo "获取完整路径失败."
-              exit 1
-          fi
-
-          echo "开始上传镜像"
-          curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@$absolute_path"
+          docker save "${image}" -o "${image_name}-image.tar"
           
           echo "开始清理磁盘空间"
           echo "=============================================================================="
           df -hT
           echo "=============================================================================="
-          # 删除镜像压缩包
-          rm $file_path
           # 清理镜像
           docker rmi $image
           echo "磁盘空间清理完毕"
@@ -104,3 +89,12 @@ jobs:
           df -hT
           echo "==============================================================================" 
         done
+
+    - name: 压缩镜像
+      run: tar -czf images.tar.gz *-image.tar
+
+    - name: 上传镜像
+      run: curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@images.tar.gz"
+
+    - name: 清理文件
+      run: rm *-image.tar
