@@ -65,7 +65,7 @@ jobs:
     #  with:
     #    stack: dual
 
-    - name: 拉取、打包镜像
+    - name: Pull Docker Images and Package
       run: |
         platform="${{ github.event.inputs.platform }}"
         images="${{ github.event.inputs.docker_images }}"
@@ -90,11 +90,14 @@ jobs:
           echo "==============================================================================" 
         done
 
-    - name: 压缩镜像
-      run: tar -czf images.tar.gz *-image.tar
+    - name: Compress the TAR files
+      run: |
+        tar -czf images.tar.gz *-image.tar
 
-    - name: 上传镜像
-      run: curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@images.tar.gz"
+    - name: Upload file
+      run: |
+        curl --progress-bar -X POST -H "Authorization: ${Authorization}" "$UPLOADURL" -F "path=@images.tar.gz"
 
-    - name: 清理文件
-      run: rm *-image.tar
+    - name: Clean up intermediate files
+      run: |
+        rm *-image.tar
