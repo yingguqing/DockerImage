@@ -1,0 +1,58 @@
+name: Build Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+        image_name:
+            description: '镜像名'
+            required: true
+        source_code_url:
+            description: '源代码下载链接'
+            required: true
+        platform:
+            description: '选择平台'
+            required: true
+            default: 'amd64'
+            type: choice
+            options:
+              - arm64
+              - amd64
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Download source code
+      run: |
+        curl -L ${{ github.event.inputs.source_code_url }} -o source_code.zip
+        unzip source_code.zip -d source_code_dir
+    
+    - name: Set up QEMU for cross-platform builds
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        cd source_code_dir/*
+        docker buildx build --platform linux/${{ github.event.inputs.platform }} -t ${{ github.event.inputs.image_name }}:latest .
+
+    - name: Save Docker image as a tar file
+      run: |
+        docker save ${{ github.event.inputs.image_name }}:latest -o image.tar
+
+    - name: Compress the TAR files
+      run: |
+        tar -czf images.tar.gz *-image.tar
+
+    - name: Upload the Docker image zip as an artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-images-tar
+        path: images.tar.gz
+        retention-days: 1  # 将保留天数设置为 1 天 最多可设置90天
