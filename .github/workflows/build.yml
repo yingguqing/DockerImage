@@ -1,4 +1,4 @@
-name: Build Docker Image
+name: 编译镜像
 
 on:
   workflow_dispatch:
