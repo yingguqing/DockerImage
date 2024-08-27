@@ -45,8 +45,7 @@ jobs:
 
     - name: Save Docker image as a tar file
       run: |
-        docker compose images -q > image_id.txt
-        docker save $(cat image_id.txt) -o image.tar
+        docker save ${{ github.event.inputs.image_name }}:latest -o image.tar
 
     - name: Compress the TAR files
       run: |
