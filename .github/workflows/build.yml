@@ -48,7 +48,7 @@ jobs:
 
     - name: Compress the TAR files
       run: |
-        tar -czf images.tar.gz *-image.tar
+        tar -czf images.tar.gz image.tar
 
     - name: Upload the Docker image zip as an artifact
       uses: actions/upload-artifact@v4
